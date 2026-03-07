@@ -46,6 +46,10 @@
            width: 100%; 
            height: 100%; 
 }
+       
+.reply-container { background: #eee; padding: 5px 15px; border-left: 4px solid var(--primary); display: none; justify-content: space-between; align-items: center; border-radius: 10px 10px 0 0; }
+.reply-preview-msg { font-size: 12px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msg-reply-line { font-size: 11px; font-style: italic; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 5px; margin-bottom: 5px; border-left: 2px solid #ccc; }
     </style>
 </head>
 <body>
@@ -117,6 +121,10 @@
             <span class="emoji-btn" onclick="addEmoji('😢')">😢</span>
             <span class="emoji-btn" onclick="addEmoji('😠')">😠</span>
         </div>
+        <div id="reply-bar" class="reply-container">
+    <div class="reply-preview-msg" id="reply-text">Replying to...</div>
+    <i class="fa fa-times" onclick="cancelReply()" style="cursor:pointer; font-size:14px;"></i>
+</div>
         <div class="input-footer">
             <label for="img-input"><i class="fa fa-image"></i></label>
             <input type="file" id="img-input" hidden accept="image/*" onchange="sendImage(this)">
@@ -210,18 +218,19 @@
                 const m = c.val();
                 const msgKey = c.key;
                 
-                // Seen logic
+               
                 if (m.sender !== loggedUser && m.status !== 'seen') {
                     database.ref('chats/' + activeChatID + '/' + msgKey).update({ status: 'seen' });
                 }
 
                 const d = document.createElement('div');
                 d.className = `msg ${m.sender === loggedUser ? 'sent' : 'received'}`;
+                d.onclick = () => setReply(m.text, m.sender === loggedUser ? 'You' : pData.name);
                 
                 let content = m.type === 'image' ? `<img src="${m.text}" class="chat-img" onclick="window.open(this.src)">` : m.text;
                 let time = m.time ? m.time : "";
                 
-                // Seen ticks
+                
                 let statusIcon = "";
                 if (m.sender === loggedUser) {
                     statusIcon = m.status === 'seen' ? `<i class="fa fa-check-double" style="color:#00ff00;"></i>` : `<i class="fa fa-check"></i>`;
@@ -243,14 +252,36 @@
     }
 
     function sendMsg() {
-        const inp = document.getElementById('msg-input');
-        if(!inp.value.trim()) return;
-        database.ref('chats/' + activeChatID).push({ 
-            sender: loggedUser, text: inp.value, type: 'text', time: getTime(), status: 'sent' 
-        });
-        inp.value = "";
+    const inp = document.getElementById('msg-input');
+    if(!inp.value.trim()) return;
+    
+    let msgData = {
+        sender: loggedUser,
+        text: inp.value,
+        type: 'text',
+        time: getTime(),
+        status: 'sent'
+    };
+
+    if(replyingTo) {
+        msgData.replyTo = replyingTo; 
+        cancelReply();
     }
 
+    database.ref('chats/' + activeChatID).push(msgData);
+    inp.value = "";
+}
+    function setReply(text, senderName) {
+    replyingTo = { text, name: senderName };
+    document.getElementById('reply-bar').style.display = 'flex';
+    document.getElementById('reply-text').innerText = `Replying to: ${text}`;
+    document.getElementById('msg-input').focus();
+}
+
+function cancelReply() {
+    replyingTo = null;
+    document.getElementById('reply-bar').style.display = 'none';
+}
     function sendImage(input) {
         const file = input.files[0];
         if(!file) return;
@@ -309,5 +340,6 @@ function renderList() {
 </script>
 </body>
 </html>
+
 
 
