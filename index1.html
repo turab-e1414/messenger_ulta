@@ -257,18 +257,28 @@
 
     function addEmoji(e) { const i = document.getElementById('msg-input'); i.value += e; i.focus(); }
     
-    function renderList() {
-        database.ref('users').once('value', snap => {
-            const cont = document.getElementById('list-container'); cont.innerHTML = "";
-            snap.forEach(c => {
-                const u = c.val(); if(u.id === loggedUser) return;
-                const d = document.createElement('div'); d.className = "chat-item";
-                d.onclick = () => openChat(u.id, u);
-                d.innerHTML = `<img src="${u.pic}"><div><h4>${u.name}</h4><p>@${u.user}</p></div>`;
-                cont.appendChild(d);
-            });
+function renderList() {
+    database.ref('users').once('value', snap => {
+        const cont = document.getElementById('list-container'); 
+        cont.innerHTML = "";
+        let hasUsers = false;
+        
+        snap.forEach(c => {
+            const u = c.val(); 
+            if(u.id === loggedUser) return;
+            hasUsers = true;
+            const d = document.createElement('div'); 
+            d.className = "chat-item";
+            d.onclick = () => openChat(u.id, u);
+            d.innerHTML = `<img src="${u.pic}"><div><h4>${u.name}</h4><p>@${u.user}</p></div>`;
+            cont.appendChild(d);
         });
-    }
+
+        if (!hasUsers) {
+            cont.innerHTML = "<p style='text-align:center; padding:20px; color:#999;'>No users found!</p>";
+        }
+    });
+}
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -291,3 +301,4 @@
 </script>
 </body>
 </html>
+
