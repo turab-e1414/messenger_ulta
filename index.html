@@ -12,7 +12,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: linear-gradient(45deg, #00dbde 0%, #fc00ff 100%); display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         .app-container { width: 100%; max-width: 420px; height: 92vh; background: var(--bg); border-radius: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; display: flex; flex-direction: column; position: relative; }
-        .screen { padding: 30px; display: none; flex-direction: column; gap: 15px; height: 100%; justify-content: center; background: white; }
+        .screen { padding: 30px; display: none; flex-direction: column; gap: 15px; height: 100%; background: white; }
         .active { display: flex; }
         h2 { text-align: center; color: var(--primary); font-size: 28px; font-weight: 800; }
         .input-group { position: relative; width: 100%; }
@@ -21,35 +21,33 @@
         .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #0084ff; font-size: 18px; }
         .btn-main { padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 16px; }
         .circle-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; }
-        #list-screen { padding: 0; justify-content: flex-start; }
-        .list-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; }
+        
+        /* List Screen */
+        #list-screen { padding: 0; }
+        .list-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; z-index: 10; }
         .chat-item { display: flex; align-items: center; gap: 15px; padding: 12px 20px; cursor: pointer; }
         .chat-item:hover { background: #f0f8ff; }
         .chat-item img { width: 50px; height: 50px; border-radius: 50%; }
-        .messages-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f9f9f9; }
-        .msg { max-width: 75%; padding: 10px 15px; border-radius: 18px; font-size: 15px; word-wrap: break-word; display: flex; flex-direction: column; }
-        .sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 4px; }
-        .received { align-self: flex-start; background: #e4e6eb; color: black; border-bottom-left-radius: 4px; }
-        .msg-time { font-size: 10px; margin-top: 4px; opacity: 0.8; align-self: flex-end; display: flex; align-items: center; gap: 3px; }
-        .received .msg-time { align-self: flex-start; color: #666; }
-        .chat-img { max-width: 100%; border-radius: 10px; cursor: pointer; margin: 5px 0; }
-        .emoji-bar { display: flex; gap: 12px; padding: 8px; background: white; border-top: 1px solid #f0f0f0; justify-content: center; font-size: 20px; }
-        .emoji-btn { cursor: pointer; }
-        .input-footer { padding: 15px; display: flex; gap: 10px; background: white; align-items: center; border-top: 1px solid #eee; }
-        #msg-input { background: #f0f2f5; border: none; flex: 1; }
-        .input-footer i { font-size: 22px; cursor: pointer; color: var(--primary); }
-        #chat-screen { 
-           z-index: 100; 
-           position: absolute; 
-           top: 0; 
-           left: 0; 
-           width: 100%; 
-           height: 100%; 
-}
-       
-.reply-container { background: #eee; padding: 5px 15px; border-left: 4px solid var(--primary); display: none; justify-content: space-between; align-items: center; border-radius: 10px 10px 0 0; }
-.reply-preview-msg { font-size: 12px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.msg-reply-line { font-size: 11px; font-style: italic; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 5px; margin-bottom: 5px; border-left: 2px solid #ccc; }
+
+        /* Chat Screen Styles */
+        #chat-screen { padding: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 100; }
+        #chat-screen.active { display: flex; }
+        .messages-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: #f9f9fb; background-image: radial-gradient(#e5e7eb 0.5px, transparent 0.5px); background-size: 20px 20px; }
+        
+        .msg { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 15px; position: relative; word-wrap: break-word; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .sent { align-self: flex-end; background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%); color: white; border-bottom-right-radius: 4px; }
+        .received { align-self: flex-start; background: #ffffff; color: #333; border: 1px solid #eee; border-bottom-left-radius: 4px; }
+        
+        .msg-time { font-size: 10px; margin-top: 4px; opacity: 0.8; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
+        .received .msg-time { color: #888; justify-content: flex-start; }
+        
+        .msg-reply-line { font-size: 11px; background: rgba(0,0,0,0.05); padding: 6px; border-radius: 8px; margin-bottom: 6px; border-left: 3px solid var(--primary); opacity: 0.9; }
+        .sent .msg-reply-line { background: rgba(255,255,255,0.2); border-left-color: white; color: white; }
+
+        .chat-img { max-width: 100%; border-radius: 10px; cursor: pointer; margin-top: 5px; }
+        .reply-container { background: #f0f0f0; padding: 8px 15px; border-left: 4px solid var(--primary); display: none; justify-content: space-between; align-items: center; }
+        .input-footer { padding: 10px 15px; display: flex; gap: 10px; background: white; align-items: center; border-top: 1px solid #eee; }
+        #msg-input { background: #f0f2f5; border: none; flex: 1; padding: 10px 15px; border-radius: 20px; outline: none; }
     </style>
 </head>
 <body>
@@ -57,7 +55,7 @@
 <div class="app-container">
     <div id="register-screen" class="screen active">
         <h2>Create Account</h2>
-        <div class="profile-upload">
+        <div style="text-align: center;">
             <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" id="reg-preview" class="circle-img" onclick="document.getElementById('reg-file').click()">
             <input type="file" id="reg-file" hidden onchange="previewImg('reg-file', 'reg-preview')">
         </div>
@@ -69,7 +67,7 @@
             <i class="fa fa-eye-slash eye-icon" onclick="togglePass('reg-pass', this)"></i>
         </div>
         <button class="btn-main" onclick="handleRegister()">Sign Up</button>
-        <p style="text-align:center; cursor:pointer;" onclick="showScreen('login-screen')">Log In</p>
+        <p style="text-align:center; cursor:pointer;" onclick="showScreen('login-screen')">Already have an account? Log In</p>
     </div>
 
     <div id="login-screen" class="screen">
@@ -97,7 +95,7 @@
 
     <div id="edit-screen" class="screen">
         <h2>Edit Profile</h2>
-        <div class="profile-upload">
+        <div style="text-align: center;">
             <img id="edit-preview" class="circle-img" onclick="document.getElementById('edit-file').click()">
             <input type="file" id="edit-file" hidden onchange="previewImg('edit-file', 'edit-preview')">
         </div>
@@ -106,7 +104,7 @@
         <button class="btn-main" style="background:#ccc;" onclick="showScreen('list-screen')">Cancel</button>
     </div>
 
-    <div id="chat-screen" class="screen" style="padding:0;">
+    <div id="chat-screen" class="screen">
         <div class="list-header">
             <i class="fa fa-chevron-left" onclick="showScreen('list-screen')" style="cursor:pointer; color: #0084ff;"></i>
             <h4 id="chat-partner-name">User</h4>
@@ -116,20 +114,24 @@
         <div class="emoji-bar">
             <span class="emoji-btn" onclick="addEmoji('❤️')">❤️</span>
             <span class="emoji-btn" onclick="addEmoji('😘')">😘</span>
-            <span class="emoji-btn" onclick="addEmoji('🥵')">🥵</span>
+            <span class="emoji-btn" onclick="addEmoji('😂')">😂</span>
+            <span class="emoji-btn" onclick="addEmoji('👍')">👍</span>
             <span class="emoji-btn" onclick="addEmoji('🔥')">🔥</span>
             <span class="emoji-btn" onclick="addEmoji('😢')">😢</span>
             <span class="emoji-btn" onclick="addEmoji('😠')">😠</span>
+            <span class="emoji-btn" onclick="addEmoji('😯')">😯</span>
+            <span class="emoji-btn" onclick="addEmoji('🫣')">🫣</span>
+            <span class="emoji-btn" onclick="addEmoji('🥵')">🥵</span>
         </div>
         <div id="reply-bar" class="reply-container">
-    <div class="reply-preview-msg" id="reply-text">Replying to...</div>
-    <i class="fa fa-times" onclick="cancelReply()" style="cursor:pointer; font-size:14px;"></i>
-</div>
+            <div class="reply-preview-msg" id="reply-text" style="font-size: 12px; color: #555;">Replying to...</div>
+            <i class="fa fa-times" onclick="cancelReply()" style="cursor:pointer; font-size:14px;"></i>
+        </div>
         <div class="input-footer">
-            <label for="img-input"><i class="fa fa-image"></i></label>
+            <label for="img-input"><i class="fa fa-image" style="font-size: 22px; cursor: pointer; color: var(--primary);"></i></label>
             <input type="file" id="img-input" hidden accept="image/*" onchange="sendImage(this)">
             <input type="text" id="msg-input" placeholder="Message..." onkeypress="if(event.key==='Enter') sendMsg()">
-            <button onclick="sendMsg()" style="background:none; border:none;"><i class="fa fa-paper-plane"></i></button>
+            <button onclick="sendMsg()" style="background:none; border:none;"><i class="fa fa-paper-plane" style="font-size: 22px; color: var(--primary); cursor:pointer;"></i></button>
         </div>
     </div>
 </div>
@@ -149,6 +151,7 @@
     const database = firebase.database();
     let loggedUser = localStorage.getItem('chat_userid');
     let activeChatID = null;
+    let replyingTo = null;
     const notifSound = new Audio('https://raw.githubusercontent.com/rafaelreis-hotmart/Audio-Notification/master/notification.mp3');
 
     window.onload = () => { if(loggedUser) loadMyData(); else showScreen('login-screen'); };
@@ -217,26 +220,25 @@
             snap.forEach(c => {
                 const m = c.val();
                 const msgKey = c.key;
-                
-               
+
                 if (m.sender !== loggedUser && m.status !== 'seen') {
                     database.ref('chats/' + activeChatID + '/' + msgKey).update({ status: 'seen' });
                 }
 
                 const d = document.createElement('div');
                 d.className = `msg ${m.sender === loggedUser ? 'sent' : 'received'}`;
-                d.onclick = () => setReply(m.text, m.sender === loggedUser ? 'You' : pData.name);
-                
+                d.onclick = () => setReply(m.type === 'image' ? 'Photo' : m.text, m.sender === loggedUser ? 'You' : pData.name);
+
                 let content = m.type === 'image' ? `<img src="${m.text}" class="chat-img" onclick="window.open(this.src)">` : m.text;
                 let time = m.time ? m.time : "";
-                
-                
                 let statusIcon = "";
                 if (m.sender === loggedUser) {
                     statusIcon = m.status === 'seen' ? `<i class="fa fa-check-double" style="color:#00ff00;"></i>` : `<i class="fa fa-check"></i>`;
                 }
 
-                d.innerHTML = `${content} <div class="msg-time">${time} ${statusIcon}</div>`;
+                let replyHtml = m.replyTo ? `<div class="msg-reply-line"><b>${m.replyTo.name}:</b> ${m.replyTo.text}</div>` : "";
+
+                d.innerHTML = `${replyHtml} <div>${content}</div> <div class="msg-time">${time} ${statusIcon}</div>`;
                 if(m.type === 'image') d.style.background = "none";
                 box.appendChild(d);
             });
@@ -252,36 +254,38 @@
     }
 
     function sendMsg() {
-    const inp = document.getElementById('msg-input');
-    if(!inp.value.trim()) return;
-    
-    let msgData = {
-        sender: loggedUser,
-        text: inp.value,
-        type: 'text',
-        time: getTime(),
-        status: 'sent'
-    };
+        const inp = document.getElementById('msg-input');
+        if(!inp.value.trim()) return;
+        
+        let msgData = {
+            sender: loggedUser,
+            text: inp.value,
+            type: 'text',
+            time: getTime(),
+            status: 'sent'
+        };
 
-    if(replyingTo) {
-        msgData.replyTo = replyingTo; 
-        cancelReply();
+        if(replyingTo) {
+            msgData.replyTo = replyingTo; 
+            cancelReply();
+        }
+
+        database.ref('chats/' + activeChatID).push(msgData);
+        inp.value = "";
     }
 
-    database.ref('chats/' + activeChatID).push(msgData);
-    inp.value = "";
-}
     function setReply(text, senderName) {
-    replyingTo = { text, name: senderName };
-    document.getElementById('reply-bar').style.display = 'flex';
-    document.getElementById('reply-text').innerText = `Replying to: ${text}`;
-    document.getElementById('msg-input').focus();
-}
+        replyingTo = { text: text.substring(0, 30) + (text.length > 30 ? "..." : ""), name: senderName };
+        document.getElementById('reply-bar').style.display = 'flex';
+        document.getElementById('reply-text').innerText = `Replying to: ${replyingTo.text}`;
+        document.getElementById('msg-input').focus();
+    }
 
-function cancelReply() {
-    replyingTo = null;
-    document.getElementById('reply-bar').style.display = 'none';
-}
+    function cancelReply() {
+        replyingTo = null;
+        document.getElementById('reply-bar').style.display = 'none';
+    }
+
     function sendImage(input) {
         const file = input.files[0];
         if(!file) return;
@@ -295,35 +299,29 @@ function cancelReply() {
     }
 
     function addEmoji(e) { const i = document.getElementById('msg-input'); i.value += e; i.focus(); }
-    
-function renderList() {
-    database.ref('users').once('value', snap => {
-        const cont = document.getElementById('list-container'); 
-        cont.innerHTML = "";
-        let hasUsers = false;
-        
-        snap.forEach(c => {
-            const u = c.val(); 
-            if(u.id === loggedUser) return;
-            hasUsers = true;
-            const d = document.createElement('div'); 
-            d.className = "chat-item";
-            d.onclick = () => openChat(u.id, u);
-            d.innerHTML = `<img src="${u.pic}"><div><h4>${u.name}</h4><p>@${u.user}</p></div>`;
-            cont.appendChild(d);
+   
+    function renderList() {
+        database.ref('users').once('value', snap => {
+            const cont = document.getElementById('list-container'); 
+            cont.innerHTML = "";
+            snap.forEach(c => {
+                const u = c.val(); 
+                if(u.id === loggedUser) return;
+                const d = document.createElement('div'); 
+                d.className = "chat-item";
+                d.onclick = () => openChat(u.id, u);
+                d.innerHTML = `<img src="${u.pic}"><div><h4>${u.name}</h4><p>@${u.user}</p></div>`;
+                cont.appendChild(d);
+            });
         });
-
-        if (!hasUsers) {
-            cont.innerHTML = "<p style='text-align:center; padding:20px; color:#999;'>No users found!</p>";
-        }
-    });
-}
+    }
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         if(id === 'list-screen') renderList();
     }
+
     function handleLogout() { localStorage.clear(); location.reload(); }
     function showEditProfile() { showScreen('edit-screen'); }
     function saveProfile() {
@@ -340,6 +338,5 @@ function renderList() {
 </script>
 </body>
 </html>
-
 
 
