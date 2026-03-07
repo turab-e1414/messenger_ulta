@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messenger Ultra Pro</title>
@@ -21,12 +22,15 @@
         .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #0084ff; font-size: 18px; }
         .btn-main { padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 16px; }
         .circle-img { 
-    width: 100px !important; 
-    height: 100px !important; 
-    margin: 10px auto; 
-    display: block; 
-}
-.screen { overflow-y: auto; } /* যাতে ছোট ফোনেও সব বক্স দেখা যায় */
+        width: 100px !important; 
+        height: 100px !important; 
+        margin: 0 auto 15px !important; 
+        display: block; 
+    }
+    .screen { 
+        padding: 20px !important; 
+        overflow-y: auto !important; 
+    }
         #list-screen { padding: 0; }
         .list-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; z-index: 10; }
         .chat-item { display: flex; align-items: center; gap: 15px; padding: 12px 20px; cursor: pointer; }
@@ -53,6 +57,13 @@
         .input-footer { padding: 10px 15px; display: flex; gap: 10px; background: white; align-items: center; border-top: 1px solid #eee; }
         #msg-input { background: #f0f2f5; border: none; flex: 1; padding: 10px 15px; border-radius: 20px; outline: none; }
     </style>
+    <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Messenger Pro">
+<meta name="apple-mobile-web-app-title" content="Messenger Pro">
+<meta name="theme-color" content="#0084ff">
+<meta name="msapplication-navbutton-color" content="#0084ff">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 
@@ -342,6 +353,7 @@
 </script>
 </body>
 </html>
+
 
 
 
