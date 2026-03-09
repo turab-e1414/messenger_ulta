@@ -23,10 +23,10 @@
     width: 100%;
     max-width: 420px;
     height: 92vh;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.85); 
     backdrop-filter: blur(15px); 
     -webkit-backdrop-filter: blur(15px);
-    border-radius: 40px;
+    border-radius: 40px; 
     border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 25px 50px rgba(0,0,0,0.2);
     overflow: hidden;
@@ -98,7 +98,7 @@
 }
         .chat-item img { width: 50px; height: 50px; border-radius: 50%; }
 
-        /* Chat Screen Styles */
+     
         #chat-screen { padding: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 100; }
         #chat-screen.active { display: flex; }
         .messages-container { 
@@ -108,7 +108,7 @@
     display: flex; 
     flex-direction: column; 
     gap: 6px; 
-    background: #ffffff; 
+    background: #ffffff;
 }
     .msg { 
     max-width: 75%; 
@@ -117,12 +117,12 @@
     font-size: 14.5px; 
     line-height: 1.4;
     word-wrap: break-word;
-    margin-bottom: 2px;
+    margin-bottom: 2px; 
 }
 
 .sent { 
     align-self: flex-end; 
-    background: #0084ff; 
+    background: #0084ff;
     color: white; 
     border-bottom-right-radius: 6px; 
 }
@@ -203,6 +203,33 @@ audio {
     50% { transform: scale(1.2); }
     100% { transform: scale(1); }
 }
+
+.reaction-panel {
+    display: none;
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 5px 10px;
+    border-radius: 30px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    z-index: 1000;
+    white-space: nowrap;
+    animation: popUp 0.2s ease-out;
+}
+@keyframes popUp {
+    from { opacity: 0; transform: translateX(-50%) scale(0.8); }
+    to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+.reaction-panel span {
+    cursor: pointer;
+    font-size: 20px;
+    margin: 0 3px;
+    transition: transform 0.1s;
+}
+.reaction-panel span:hover { transform: scale(1.3); }
+.msg { position: relative; } 
     </style>
     <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -402,58 +429,71 @@ audio {
                 const d = document.createElement('div');
                 d.className = `msg ${m.sender === loggedUser ? 'sent' : 'received'}`;
                 
-let pressTimer;
+                
+                let content;
+                if (m.type === 'image') {
+                    content = `<img src="${m.text}" class="chat-img" onclick="window.open(this.src)">`;
+                } else if (m.type === 'audio') {
+                    content = `<audio controls src="${m.text}"></audio>`;
+                } else {
+                    content = m.text;
+                }
 
-
-d.onmousedown = d.ontouchstart = (e) => {
-    pressTimer = window.setTimeout(() => {
-    
-        const reaction = prompt("React with: ❤️, 👍, 😂, 🔥,😯,😢");
-        if(reaction) {
-            database.ref('chats/' + activeChatID + '/' + msgKey).update({ reaction: reaction });
-        }
-    }, 1000); 
-};
-
-
-d.onmouseup = d.ontouchend = () => {
-    clearTimeout(pressTimer);
-};
-
-
-d.onclick = () => {
-
-    setReply(m.type === 'image' ? 'Photo' : m.text, m.sender === loggedUser ? 'You' : pData.name);
-};
-
-                let content; 
-
-if (m.type === 'image') {
-
-    content = `<img src="${m.text}" class="chat-img" onclick="window.open(this.src)">`;
-} 
-else if (m.type === 'audio') {
-
-    content = `<audio controls src="${m.text}"></audio>`;
-} 
-else {
-
-    content = m.text;
-}
                 let time = m.time ? m.time : "";
                 let statusIcon = "";
                 if (m.sender === loggedUser) {
                     statusIcon = m.status === 'seen' ? `<i class="fa fa-check-double" style="color:#00ff00;"></i>` : `<i class="fa fa-check"></i>`;
                 }
 
+                
                 let replyHtml = m.replyTo ? `<div class="msg-reply-line"><b>${m.replyTo.name}:</b> ${m.replyTo.text}</div>` : "";
+                let reactBadge = m.reaction ? `<span class="reaction-badge">${m.reaction}</span>` : "";
 
-                d.innerHTML = `${replyHtml} <div>${content}</div> <div class="msg-time">${time} ${statusIcon}</div>`;
-                let reactHtml = m.reaction ? `<span class="reaction-badge">${m.reaction}</span>` : "";
+               
+                let reactionPanel = `
+                    <div class="reaction-panel" id="panel-${msgKey}">
+                        <span onclick="addReaction('${msgKey}', '❤️')">❤️</span>
+                        <span onclick="addReaction('${msgKey}', '👍')">👍</span>
+                        <span onclick="addReaction('${msgKey}', '😂')">😂</span>
+                        <span onclick="addReaction('${msgKey}', '😮')">😮</span>
+                        <span onclick="addReaction('${msgKey}', '😢')">😢</span>
+                        <span onclick="addReaction('${msgKey}', '🔥')">🔥</span>
+                    </div>`;
 
+               
+                d.innerHTML = `
+                    ${reactionPanel}
+                    ${replyHtml}
+                    <div>${content}</div>
+                    ${reactBadge}
+                    <div class="msg-time">${time} ${statusIcon}</div>
+                `;
 
-d.innerHTML = `${replyHtml} <div>${content}</div> ${reactHtml} <div class="msg-time">${time} ${statusIcon}</div>`;
                 if(m.type === 'image') d.style.background = "none";
+
+               
+                let timer;
+                d.addEventListener('touchstart', (e) => {
+                    timer = setTimeout(() => {
+                        document.getElementById(`panel-${msgKey}`).style.display = 'flex';
+                    }, 600);
+                });
+                d.addEventListener('touchend', () => clearTimeout(timer));
+                
+                d.addEventListener('mousedown', () => {
+                    timer = setTimeout(() => {
+                        document.getElementById(`panel-${msgKey}`).style.display = 'flex';
+                    }, 600);
+                });
+                d.addEventListener('mouseup', () => clearTimeout(timer));
+
+            
+                d.onclick = (e) => {
+                    if (e.target.tagName !== 'SPAN') { 
+                        setReply(m.type === 'image' ? 'Photo' : m.text, m.sender === loggedUser ? 'You' : pData.name);
+                    }
+                };
+
                 box.appendChild(d);
             });
             box.scrollTop = box.scrollHeight;
@@ -466,6 +506,8 @@ d.innerHTML = `${replyHtml} <div>${content}</div> ${reactHtml} <div class="msg-t
             firstLoad = false;
         });
     }
+        
+     
 
     function sendMsg() {
         const inp = document.getElementById('msg-input');
@@ -542,16 +584,14 @@ d.innerHTML = `${replyHtml} <div>${content}</div> ${reactHtml} <div class="msg-t
         cont.innerHTML = "";
         
         let users = [];
-        
+      
         snap.forEach(c => {
             const u = c.val();
             if(u.id !== loggedUser) users.push(u);
         });
 
-        
         users.sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
 
-       
         users.forEach(u => {
             const d = document.createElement('div'); 
             d.className = "chat-item";
@@ -645,10 +685,17 @@ function sendVoiceMsg(audioData) {
     });
     database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
 }
+function addReaction(msgKey, emoji) {
+    database.ref('chats/' + activeChatID + '/' + msgKey).update({ 
+        reaction: emoji 
+    });
+  
+    const panel = document.getElementById(`panel-${msgKey}`);
+    if(panel) panel.style.display = 'none';
+}
 </script>
 </body>
 </html>
-
 
 
 
