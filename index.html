@@ -357,14 +357,14 @@ audio {
     }
 };
 
-   function loadMyData() {
-    database.ref('users/' + loggedUser).on('value', snap => {
+  function loadMyData() {
+    if(!loggedUser) return;
+    database.ref('users/' + loggedUser).once('value').then(snap => {
         const d = snap.val();
         if(d) {
-            document.getElementById('my-pic').src = d.pic;
-            document.getElementById('edit-preview').src = d.pic;
-            document.getElementById('edit-name').value = d.name;
-           
+            document.getElementById('my-pic').src = d.pic || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+            document.getElementById('edit-preview').src = d.pic || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+            document.getElementById('edit-name').value = d.name || "";
         }
     });
 }
@@ -394,121 +394,160 @@ audio {
     }
 
     function handleLogin() {
-        const id = document.getElementById('log-id').value.trim().replace(/[.#$[\]]/g, "_");
-        const pass = document.getElementById('log-pass').value;
-        database.ref('users/' + id).once('value').then(snap => {
-            if(snap.val() && snap.val().pass === pass) {
-                loggedUser = id; localStorage.setItem('chat_userid', id); loadMyData();
-            } else alert("Wrong ID or Password!");
-        });
-    }
+    const id = document.getElementById('log-id').value.trim().replace(/[.#$[\]]/g, "_");
+    const pass = document.getElementById('log-pass').value;
 
+    if(!id || !pass) return alert("Please enter ID and Password!");
+
+    
+    const loginBtn = document.querySelector("#login-screen .btn-main");
+    const originalText = loginBtn.innerText;
+    loginBtn.innerText = "Logging in...";
+    loginBtn.disabled = true;
+
+    database.ref('users/' + id).once('value').then(snap => {
+        const userData = snap.val();
+        if(userData && userData.pass === pass) {
+            loggedUser = id; 
+            localStorage.setItem('chat_userid', id); 
+            loadMyData();
+            showScreen('list-screen');
+        } else {
+            alert("Wrong ID or Password!");
+        }
+    }).catch(err => {
+        alert("Network Error!");
+    }).finally(() => {
+        loginBtn.innerText = originalText;
+        loginBtn.disabled = false;
+    });
+}
     function getTime() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
-    function openChat(pID, pData) {
-        activeChatID = [loggedUser, pID].sort().join("_");
-        document.getElementById('chat-partner-name').innerText = pData.name;
-        document.getElementById('chat-partner-pic').src = pData.pic;
-        showScreen('chat-screen');
-        
-        database.ref('chats/' + activeChatID).off();
-        let firstLoad = true;
+   function openChat(pID, pData) {
+    activeChatID = [loggedUser, pID].sort().join("_");
+    document.getElementById('chat-partner-name').innerText = pData.name;
+    document.getElementById('chat-partner-pic').src = pData.pic;
+    showScreen('chat-screen');
+    
+    const box = document.getElementById('chat-box');
+    box.innerHTML = ""; 
+    
+    database.ref('chats/' + activeChatID).off(); 
+    let initialDataLoaded = false;
 
-        database.ref('chats/' + activeChatID).on('value', snap => {
-            const box = document.getElementById('chat-box');
-            box.innerHTML = "";
-            
-            snap.forEach(c => {
-                const m = c.val();
-                const msgKey = c.key;
 
-                if (m.sender !== loggedUser && m.status !== 'seen') {
-                    database.ref('chats/' + activeChatID + '/' + msgKey).update({ status: 'seen' });
+    const chatRef = database.ref('chats/' + activeChatID);
+    
+
+    chatRef.limitToLast(50).on('child_added', snap => {
+        const m = snap.val();
+        const msgKey = snap.key;
+
+        if (m.sender !== loggedUser && m.status !== 'seen') {
+            chatRef.child(msgKey).update({ status: 'seen' });
+        }
+
+        renderSingleMessage(msgKey, m, pData);
+        box.scrollTop = box.scrollHeight;
+
+        if (initialDataLoaded && m.sender !== loggedUser) {
+            notifSound.play().catch(() => {});
+        }
+    });
+
+    chatRef.once('value', () => { initialDataLoaded = true; });
+
+    chatRef.on('child_changed', snap => {
+        const updatedMsg = snap.val();
+        const msgElement = document.getElementById(`msg-${snap.key}`);
+        if (msgElement) {
+           
+            let badge = msgElement.querySelector('.reaction-badge');
+            if (updatedMsg.reaction) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'reaction-badge';
+                    msgElement.appendChild(badge);
                 }
-
-                const d = document.createElement('div');
-                d.className = `msg ${m.sender === loggedUser ? 'sent' : 'received'}`;
-                
-                
-                let content;
-                if (m.type === 'image') {
-                    content = `<img src="${m.text}" class="chat-img" onclick="window.open(this.src)">`;
-                } else if (m.type === 'audio') {
-                    content = `<audio controls src="${m.text}"></audio>`;
-                } else {
-                    content = m.text;
-                }
-
-                let time = m.time ? m.time : "";
-                let statusIcon = "";
-                if (m.sender === loggedUser) {
-                    statusIcon = m.status === 'seen' ? `<i class="fa fa-check-double" style="color:#00ff00;"></i>` : `<i class="fa fa-check"></i>`;
-                }
-
-                
-                let replyHtml = m.replyTo ? `<div class="msg-reply-line"><b>${m.replyTo.name}:</b> ${m.replyTo.text}</div>` : "";
-                let reactBadge = m.reaction ? `<span class="reaction-badge">${m.reaction}</span>` : "";
-
-               
-                let reactionPanel = `
-                    <div class="reaction-panel" id="panel-${msgKey}">
-                        <span onclick="addReaction('${msgKey}', '❤️')">❤️</span>
-                        <span onclick="addReaction('${msgKey}', '👍')">👍</span>
-                        <span onclick="addReaction('${msgKey}', '😂')">😂</span>
-                        <span onclick="addReaction('${msgKey}', '😮')">😮</span>
-                        <span onclick="addReaction('${msgKey}', '😢')">😢</span>
-                        <span onclick="addReaction('${msgKey}', '🔥')">🔥</span>
-                    </div>`;
-
-               
-                d.innerHTML = `
-                    ${reactionPanel}
-                    ${replyHtml}
-                    <div>${content}</div>
-                    ${reactBadge}
-                    <div class="msg-time">${time} ${statusIcon}</div>
-                `;
-
-                if(m.type === 'image') d.style.background = "none";
-
-               
-                let timer;
-                d.addEventListener('touchstart', (e) => {
-                    timer = setTimeout(() => {
-                        document.getElementById(`panel-${msgKey}`).style.display = 'flex';
-                    }, 600);
-                });
-                d.addEventListener('touchend', () => clearTimeout(timer));
-                
-                d.addEventListener('mousedown', () => {
-                    timer = setTimeout(() => {
-                        document.getElementById(`panel-${msgKey}`).style.display = 'flex';
-                    }, 600);
-                });
-                d.addEventListener('mouseup', () => clearTimeout(timer));
-
-            
-                d.onclick = (e) => {
-                    if (e.target.tagName !== 'SPAN') { 
-                        setReply(m.type === 'image' ? 'Photo' : m.text, m.sender === loggedUser ? 'You' : pData.name);
-                    }
-                };
-
-                box.appendChild(d);
-            });
-            box.scrollTop = box.scrollHeight;
-            
-            if(!firstLoad) {
-                const msgs = Object.values(snap.val() || {});
-                const lastMsg = msgs[msgs.length - 1];
-                if(lastMsg && lastMsg.sender !== loggedUser) notifSound.play().catch(()=>{});
+                badge.innerText = updatedMsg.reaction;
             }
-            firstLoad = false;
-        });
-    }
-        
-     
+           
+            if (updatedMsg.sender === loggedUser) {
+                const timeDiv = msgElement.querySelector('.msg-time');
+                const statusIcon = updatedMsg.status === 'seen' ? 
+                    `<i class="fa fa-check-double" style="color:#00ff00;"></i>` : `<i class="fa fa-check"></i>`;
+                timeDiv.innerHTML = `${updatedMsg.time} ${statusIcon}`;
+            }
+        }
+    });
+}
+     function renderSingleMessage(msgKey, m, pData) {
+    const box = document.getElementById('chat-box');
+    const d = document.createElement('div');
+    d.id = `msg-${msgKey}`;
+    d.className = `msg ${m.sender === loggedUser ? 'sent' : 'received'}`;
+    
 
+    let content;
+    if (m.type === 'image') {
+        content = `<img src="${m.text}" class="chat-img" onclick="window.open(this.src)">`;
+        d.style.background = "none";
+    } else if (m.type === 'audio') {
+        content = `<audio controls src="${m.text}"></audio>`;
+    } else {
+        content = m.text;
+    }
+
+    let statusIcon = "";
+    if (m.sender === loggedUser) {
+        statusIcon = m.status === 'seen' ? `<i class="fa fa-check-double" style="color:#00ff00;"></i>` : `<i class="fa fa-check"></i>`;
+    }
+
+    let replyHtml = m.replyTo ? `<div class="msg-reply-line"><b>${m.replyTo.name}:</b> ${m.replyTo.text}</div>` : "";
+    let reactBadge = m.reaction ? `<span class="reaction-badge">${m.reaction}</span>` : "";
+
+   
+    let reactionPanel = `
+        <div class="reaction-panel" id="panel-${msgKey}">
+            <span onclick="addReaction('${msgKey}', '❤️')">❤️</span>
+            <span onclick="addReaction('${msgKey}', '👍')">👍</span>
+            <span onclick="addReaction('${msgKey}', '😂')">😂</span>
+            <span onclick="addReaction('${msgKey}', '😮')">😮</span>
+            <span onclick="addReaction('${msgKey}', '😢')">😢</span>
+            <span onclick="addReaction('${msgKey}', '🔥')">🔥</span>
+        </div>`;
+
+    d.innerHTML = `
+        ${reactionPanel}
+        ${replyHtml}
+        <div>${content}</div>
+        ${reactBadge}
+        <div class="msg-time">${m.time || ""} ${statusIcon}</div>
+    `;
+
+   
+    let timer;
+    const showPanel = () => {
+        timer = setTimeout(() => {
+            document.getElementById(`panel-${msgKey}`).style.display = 'flex';
+        }, 600);
+    };
+    const clearTimer = () => clearTimeout(timer);
+
+    d.addEventListener('touchstart', showPanel);
+    d.addEventListener('touchend', clearTimer);
+    d.addEventListener('mousedown', showPanel);
+    d.addEventListener('mouseup', clearTimer);
+
+    d.onclick = (e) => {
+        if (e.target.tagName !== 'SPAN') { 
+            setReply(m.type === 'image' ? 'Photo' : m.text, m.sender === loggedUser ? 'You' : pData.name);
+        }
+    };
+
+    box.appendChild(d);
+}
     function sendMsg() {
         const inp = document.getElementById('msg-input');
         if(!inp.value.trim()) return;
@@ -530,7 +569,7 @@ audio {
         inp.value = "";
         database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
     }
-
+     
     function setReply(text, senderName) {
         replyingTo = { text: text.substring(0, 30) + (text.length > 30 ? "..." : ""), name: senderName };
         document.getElementById('reply-bar').style.display = 'flex';
@@ -560,7 +599,8 @@ audio {
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
               
-                const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+                const compressedData = canvas.toDataURL('image/jpeg', 0.5); 
+              
 
                 database.ref('chats/' + activeChatID).push({ 
                     sender: loggedUser, 
@@ -575,41 +615,32 @@ audio {
     });
     database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
 }
-
     function addEmoji(e) { const i = document.getElementById('msg-input'); i.value += e; i.focus(); }
+   function renderList() {
+    const cont = document.getElementById('list-container');
+    cont.innerHTML = "<p style='text-align:center; padding:20px;'>Loading chats...</p>";
+
    
-    function renderList() {
-    database.ref('users').once('value', snap => {
-        const cont = document.getElementById('list-container'); 
+    database.ref('users').once('value').then(snap => {
         cont.innerHTML = "";
-        
         let users = [];
-      
         snap.forEach(c => {
             const u = c.val();
-            if(u.id !== loggedUser) users.push(u);
+            if (u.id !== loggedUser) users.push(u);
         });
+
 
         users.sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
 
+        const fragment = document.createDocumentFragment(); 
         users.forEach(u => {
-            const d = document.createElement('div'); 
+            const d = document.createElement('div');
             d.className = "chat-item";
-            
-            let pressTimer;
-            d.onmousedown = d.ontouchstart = () => {
-                pressTimer = setTimeout(() => {
-                    if(confirm("Delete this chat?")) {
-                        database.ref('chats/' + [loggedUser, u.id].sort().join("_")).remove();
-                    }
-                }, 1500); 
-            };
-            d.onmouseup = d.ontouchend = () => clearTimeout(pressTimer);
-
             d.onclick = () => openChat(u.id, u);
             d.innerHTML = `<img src="${u.pic}"><div><h4>${u.name}</h4><p>@${u.user || 'user'}</p></div>`;
-            cont.appendChild(d);
+            fragment.appendChild(d);
         });
+        cont.appendChild(fragment);
     });
 }
 
@@ -696,7 +727,6 @@ function addReaction(msgKey, emoji) {
 </script>
 </body>
 </html>
-
 
 
 
