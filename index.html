@@ -3,6 +3,7 @@
 <head>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messenger Ultra Pro</title>
@@ -11,9 +12,28 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #0084ff; --bg: #f0f2f5; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+       * { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Poppins', sans-serif; 
+}
         body { background: linear-gradient(45deg, #00dbde 0%, #fc00ff 100%); display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .app-container { width: 100%; max-width: 420px; height: 92vh; background: var(--bg); border-radius: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+       .app-container {
+    width: 100%;
+    max-width: 420px;
+    height: 92vh;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px); 
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
         .screen { padding: 30px; display: none; flex-direction: column; gap: 15px; height: 100%; background: white; }
         .active { display: flex; }
         h2 { text-align: center; color: var(--primary); font-size: 28px; font-weight: 800; }
@@ -21,7 +41,22 @@
         input { width: 100%; padding: 14px 20px; border: 2px solid #eee; border-radius: 15px; outline: none; font-size: 16px; transition: 0.3s; }
         input:focus { border-color: var(--primary); }
         .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #0084ff; font-size: 18px; }
-        .btn-main { padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .btn-main {
+    padding: 16px;
+    background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 10px 20px rgba(0, 132, 255, 0.2);
+    transition: all 0.3s ease;
+}
+.btn-main:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px rgba(0, 132, 255, 0.3);
+}
         .circle-img { 
         width: 100px !important; 
         height: 100px !important; 
@@ -33,19 +68,71 @@
         overflow-y: auto !important; 
     }
         #list-screen { padding: 0; }
-        .list-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; z-index: 10; }
-        .chat-item { display: flex; align-items: center; gap: 15px; padding: 12px 20px; cursor: pointer; }
-        .chat-item:hover { background: #f0f8ff; }
+       .list-header { 
+    padding: 12px 18px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+        .chat-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    margin: 8px 15px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.chat-item:hover {
+    transform: scale(1.03);
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
         .chat-item img { width: 50px; height: 50px; border-radius: 50%; }
 
         /* Chat Screen Styles */
         #chat-screen { padding: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 100; }
         #chat-screen.active { display: flex; }
-        .messages-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: #f9f9fb; background-image: radial-gradient(#e5e7eb 0.5px, transparent 0.5px); background-size: 20px 20px; }
-        
-        .msg { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 15px; position: relative; word-wrap: break-word; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .sent { align-self: flex-end; background: linear-gradient(135deg, #0084ff 0%, #00c6ff 100%); color: white; border-bottom-right-radius: 4px; }
-        .received { align-self: flex-start; background: #ffffff; color: #333; border: 1px solid #eee; border-bottom-left-radius: 4px; }
+        .messages-container { 
+    flex: 1; 
+    padding: 15px; 
+    overflow-y: auto; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 6px; 
+    background: #ffffff; 
+}
+    .msg { 
+    max-width: 75%; 
+    padding: 10px 16px; 
+    border-radius: 22px; 
+    font-size: 14.5px; 
+    line-height: 1.4;
+    word-wrap: break-word;
+    margin-bottom: 2px;
+}
+
+.sent { 
+    align-self: flex-end; 
+    background: #0084ff; 
+    color: white; 
+    border-bottom-right-radius: 6px; 
+}
+
+.received { 
+    align-self: flex-start; 
+    background: #e4e6eb; 
+    color: black; 
+    border-bottom-left-radius: 6px; 
+}
         
         .msg-time { font-size: 10px; margin-top: 4px; opacity: 0.8; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
         .received .msg-time { color: #888; justify-content: flex-start; }
@@ -55,8 +142,67 @@
 
         .chat-img { max-width: 100%; border-radius: 10px; cursor: pointer; margin-top: 5px; }
         .reply-container { background: #f0f0f0; padding: 8px 15px; border-left: 4px solid var(--primary); display: none; justify-content: space-between; align-items: center; }
-        .input-footer { padding: 10px 15px; display: flex; gap: 10px; background: white; align-items: center; border-top: 1px solid #eee; }
-        #msg-input { background: #f0f2f5; border: none; flex: 1; padding: 10px 15px; border-radius: 20px; outline: none; }
+      .input-footer { 
+    padding: 10px 15px; 
+    display: flex; 
+    gap: 12px; 
+    background: white; 
+    align-items: center;
+    border-top: 1px solid #eee;
+}
+
+#msg-input { 
+    background: #f0f2f5; 
+    border: none; 
+    flex: 1; 
+    padding: 10px 20px; 
+    border-radius: 25px; 
+    outline: none; 
+    font-size: 15px;
+}
+        .reaction-badge {
+    position: absolute;
+    bottom: -10px;
+    right: 10px;
+    background: white;
+    border-radius: 12px;
+    padding: 2px 6px;
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border: 1px solid #eee;
+}
+.emoji-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 5px;
+    background: #f9f9f9;
+    border-top: 1px solid #eee;
+}
+.emoji-btn {
+    cursor: pointer;
+    font-size: 20px;
+    transition: transform 0.2s;
+}
+.emoji-btn:hover { transform: scale(1.3); }
+#edit-screen input {
+    margin-bottom: 10px;
+}
+
+audio {
+    max-width: 100%;
+    height: 40px;
+    margin-top: 5px;
+    border-radius: 20px;
+}
+.recording-active {
+    color: #ff3b30 !important; 
+    animation: pulse 1s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
     </style>
     <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -118,6 +264,7 @@
         <input type="text" id="edit-name" placeholder="New Full Name">
         <button class="btn-main" onclick="saveProfile()">Save</button>
         <button class="btn-main" style="background:#ccc;" onclick="showScreen('list-screen')">Cancel</button>
+        <input type="password" id="edit-pass" placeholder="New Password">
     </div>
 
     <div id="chat-screen" class="screen">
@@ -143,12 +290,16 @@
             <div class="reply-preview-msg" id="reply-text" style="font-size: 12px; color: #555;">Replying to...</div>
             <i class="fa fa-times" onclick="cancelReply()" style="cursor:pointer; font-size:14px;"></i>
         </div>
-        <div class="input-footer">
-            <label for="img-input"><i class="fa fa-image" style="font-size: 22px; cursor: pointer; color: var(--primary);"></i></label>
-            <input type="file" id="img-input" hidden accept="image/*" onchange="sendImage(this)">
-            <input type="text" id="msg-input" placeholder="Message..." onkeypress="if(event.key==='Enter') sendMsg()">
-            <button onclick="sendMsg()" style="background:none; border:none;"><i class="fa fa-paper-plane" style="font-size: 22px; color: var(--primary); cursor:pointer;"></i></button>
-        </div>
+       <div class="input-footer">
+    <label for="img-input"><i class="fa fa-image" style="font-size: 22px; cursor: pointer; color: var(--primary);"></i></label>
+    
+    <i class="fa fa-microphone" id="voice-btn" style="font-size: 22px; cursor: pointer; color: var(--primary);" onclick="toggleRecording()"></i>
+    
+    <input type="file" id="img-input" hidden multiple accept="image/*" onchange="sendImage(this)">
+    
+    <input type="text" id="msg-input" placeholder="Message..." onkeypress="if(event.key==='Enter') sendMsg()">
+    <button onclick="sendMsg()" style="background:none; border:none;"><i class="fa fa-paper-plane" style="font-size: 22px; color: var(--primary); cursor:pointer;"></i></button>
+</div>
     </div>
 </div>
 
@@ -170,19 +321,26 @@
     let replyingTo = null;
     const notifSound = new Audio('https://raw.githubusercontent.com/rafaelreis-hotmart/Audio-Notification/master/notification.mp3');
 
-    window.onload = () => { if(loggedUser) loadMyData(); else showScreen('login-screen'); };
-
-    function loadMyData() {
-        database.ref('users/' + loggedUser).on('value', snap => {
-            const d = snap.val();
-            if(d) {
-                document.getElementById('my-pic').src = d.pic;
-                document.getElementById('edit-preview').src = d.pic;
-                document.getElementById('edit-name').value = d.name;
-                showScreen('list-screen');
-            }
-        });
+     window.onload = () => { 
+    if(loggedUser) {
+        loadMyData(); 
+        showScreen('list-screen'); 
+    } else {
+        showScreen('login-screen'); 
     }
+};
+
+   function loadMyData() {
+    database.ref('users/' + loggedUser).on('value', snap => {
+        const d = snap.val();
+        if(d) {
+            document.getElementById('my-pic').src = d.pic;
+            document.getElementById('edit-preview').src = d.pic;
+            document.getElementById('edit-name').value = d.name;
+           
+        }
+    });
+}
 
     function togglePass(id, icon) {
         const inp = document.getElementById(id);
@@ -243,9 +401,45 @@
 
                 const d = document.createElement('div');
                 d.className = `msg ${m.sender === loggedUser ? 'sent' : 'received'}`;
-                d.onclick = () => setReply(m.type === 'image' ? 'Photo' : m.text, m.sender === loggedUser ? 'You' : pData.name);
+                
+let pressTimer;
 
-                let content = m.type === 'image' ? `<img src="${m.text}" class="chat-img" onclick="window.open(this.src)">` : m.text;
+
+d.onmousedown = d.ontouchstart = (e) => {
+    pressTimer = window.setTimeout(() => {
+    
+        const reaction = prompt("React with: ❤️, 👍, 😂, 🔥,😯,😢");
+        if(reaction) {
+            database.ref('chats/' + activeChatID + '/' + msgKey).update({ reaction: reaction });
+        }
+    }, 1000); 
+};
+
+
+d.onmouseup = d.ontouchend = () => {
+    clearTimeout(pressTimer);
+};
+
+
+d.onclick = () => {
+
+    setReply(m.type === 'image' ? 'Photo' : m.text, m.sender === loggedUser ? 'You' : pData.name);
+};
+
+                let content; 
+
+if (m.type === 'image') {
+
+    content = `<img src="${m.text}" class="chat-img" onclick="window.open(this.src)">`;
+} 
+else if (m.type === 'audio') {
+
+    content = `<audio controls src="${m.text}"></audio>`;
+} 
+else {
+
+    content = m.text;
+}
                 let time = m.time ? m.time : "";
                 let statusIcon = "";
                 if (m.sender === loggedUser) {
@@ -255,6 +449,10 @@
                 let replyHtml = m.replyTo ? `<div class="msg-reply-line"><b>${m.replyTo.name}:</b> ${m.replyTo.text}</div>` : "";
 
                 d.innerHTML = `${replyHtml} <div>${content}</div> <div class="msg-time">${time} ${statusIcon}</div>`;
+                let reactHtml = m.reaction ? `<span class="reaction-badge">${m.reaction}</span>` : "";
+
+
+d.innerHTML = `${replyHtml} <div>${content}</div> ${reactHtml} <div class="msg-time">${time} ${statusIcon}</div>`;
                 if(m.type === 'image') d.style.background = "none";
                 box.appendChild(d);
             });
@@ -288,6 +486,7 @@
 
         database.ref('chats/' + activeChatID).push(msgData);
         inp.value = "";
+        database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
     }
 
     function setReply(text, senderName) {
@@ -303,34 +502,76 @@
     }
 
     function sendImage(input) {
-        const file = input.files[0];
-        if(!file) return;
+    const files = Array.from(input.files).slice(0, 5);
+    files.forEach(file => {
         const reader = new FileReader();
         reader.onload = e => {
-            database.ref('chats/' + activeChatID).push({ 
-                sender: loggedUser, text: e.target.result, type: 'image', time: getTime(), status: 'sent' 
-            });
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600; 
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+              
+                const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+
+                database.ref('chats/' + activeChatID).push({ 
+                    sender: loggedUser, 
+                    text: compressedData, 
+                    type: 'image', 
+                    time: getTime(), 
+                    status: 'sent' 
+                });
+            };
         };
         reader.readAsDataURL(file);
-    }
+    });
+    database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
+}
 
     function addEmoji(e) { const i = document.getElementById('msg-input'); i.value += e; i.focus(); }
    
     function renderList() {
-        database.ref('users').once('value', snap => {
-            const cont = document.getElementById('list-container'); 
-            cont.innerHTML = "";
-            snap.forEach(c => {
-                const u = c.val(); 
-                if(u.id === loggedUser) return;
-                const d = document.createElement('div'); 
-                d.className = "chat-item";
-                d.onclick = () => openChat(u.id, u);
-                d.innerHTML = `<img src="${u.pic}"><div><h4>${u.name}</h4><p>@${u.user}</p></div>`;
-                cont.appendChild(d);
-            });
+    database.ref('users').once('value', snap => {
+        const cont = document.getElementById('list-container'); 
+        cont.innerHTML = "";
+        
+        let users = [];
+        
+        snap.forEach(c => {
+            const u = c.val();
+            if(u.id !== loggedUser) users.push(u);
         });
-    }
+
+        
+        users.sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
+
+       
+        users.forEach(u => {
+            const d = document.createElement('div'); 
+            d.className = "chat-item";
+            
+            let pressTimer;
+            d.onmousedown = d.ontouchstart = () => {
+                pressTimer = setTimeout(() => {
+                    if(confirm("Delete this chat?")) {
+                        database.ref('chats/' + [loggedUser, u.id].sort().join("_")).remove();
+                    }
+                }, 1500); 
+            };
+            d.onmouseup = d.ontouchend = () => clearTimeout(pressTimer);
+
+            d.onclick = () => openChat(u.id, u);
+            d.innerHTML = `<img src="${u.pic}"><div><h4>${u.name}</h4><p>@${u.user || 'user'}</p></div>`;
+            cont.appendChild(d);
+        });
+    });
+}
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -340,20 +581,76 @@
 
     function handleLogout() { localStorage.clear(); location.reload(); }
     function showEditProfile() { showScreen('edit-screen'); }
-    function saveProfile() {
-        const n = document.getElementById('edit-name').value;
-        const p = document.getElementById('edit-preview').src;
-        database.ref('users/' + loggedUser).update({ name: n, pic: p }).then(() => { alert("Updated!"); showScreen('list-screen'); });
-    }
+    
     function searchUser() {
         const term = document.getElementById('search-input').value.toLowerCase();
         document.querySelectorAll('.chat-item').forEach(item => {
             item.style.display = item.innerText.toLowerCase().includes(term) ? "flex" : "none";
         });
     }
+    function saveProfile() {
+    const n = document.getElementById('edit-name').value;
+    const p = document.getElementById('edit-preview').src;
+    const newPass = document.getElementById('edit-pass').value;
+    
+    let updateData = { name: n, pic: p };
+    if(newPass) updateData.pass = newPass; 
+
+    database.ref('users/' + loggedUser).update(updateData).then(() => { 
+        alert("Updated!"); 
+        showScreen('list-screen'); 
+    });
+}
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+async function toggleRecording() {
+    const btn = document.getElementById('voice-btn');
+    if (!isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => {
+                    sendVoiceMsg(reader.result);
+                };
+                stream.getTracks().forEach(track => track.stop());
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            btn.classList.add('recording-active');
+        } catch (err) {
+            alert("Microphone access denied!");
+        }
+    } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        btn.classList.remove('recording-active');
+    }
+}
+
+function sendVoiceMsg(audioData) {
+    database.ref('chats/' + activeChatID).push({
+        sender: loggedUser,
+        text: audioData,
+        type: 'audio',
+        time: getTime(),
+        status: 'sent'
+    });
+    database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
+}
 </script>
 </body>
 </html>
+
+
+
 
 
 
