@@ -8,7 +8,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messenger Ultra Pro</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+       (function(){
+          emailjs.init("AmUoJofPl1tCS4Zb_"); 
+       })();
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #0084ff; --bg: #f0f2f5; }
@@ -97,8 +106,6 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
         .chat-item img { width: 50px; height: 50px; border-radius: 50%; }
-
-     
         #chat-screen { padding: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 100; }
         #chat-screen.active { display: flex; }
         .messages-container { 
@@ -119,21 +126,18 @@
     word-wrap: break-word;
     margin-bottom: 2px; 
 }
-
 .sent { 
     align-self: flex-end; 
     background: #0084ff;
     color: white; 
     border-bottom-right-radius: 6px; 
 }
-
 .received { 
     align-self: flex-start; 
     background: #e4e6eb; 
     color: black; 
     border-bottom-left-radius: 6px; 
-}
-        
+}   
         .msg-time { font-size: 10px; margin-top: 4px; opacity: 0.8; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
         .received .msg-time { color: #888; justify-content: flex-start; }
         
@@ -203,7 +207,6 @@ audio {
     50% { transform: scale(1.2); }
     100% { transform: scale(1); }
 }
-
 .reaction-panel {
     display: none;
     position: absolute;
@@ -249,6 +252,7 @@ audio {
             <input type="file" id="reg-file" hidden onchange="previewImg('reg-file', 'reg-preview')">
         </div>
         <input type="text" id="reg-id" placeholder="Phone Number">
+        <input type="email" id="reg-email" placeholder="Your Gmail">
         <input type="text" id="reg-user" placeholder="Username">
         <input type="text" id="reg-name" placeholder="Full Name">
         <div class="input-group">
@@ -260,15 +264,19 @@ audio {
     </div>
 
     <div id="login-screen" class="screen">
-        <h2>Login</h2>
-        <input type="text" id="log-id" placeholder="Phone Number">
-        <div class="input-group">
-            <input type="password" id="log-pass" placeholder="Password">
-            <i class="fa fa-eye-slash eye-icon" onclick="togglePass('log-pass', this)"></i>
-        </div>
-        <button class="btn-main" onclick="handleLogin()">Log In</button>
-        <p style="text-align:center; cursor:pointer;" onclick="showScreen('register-screen')">Create Account</p>
+    <h2>Login</h2>
+    <input type="text" id="log-id" placeholder="Phone Number">
+    <div class="input-group">
+        <input type="password" id="log-pass" placeholder="Password">
+        <i class="fa fa-eye-slash eye-icon" onclick="togglePass('log-pass', this)"></i>
     </div>
+
+    <button class="btn-main" onclick="handleLogin()">Log In</button>
+
+    <p style="text-align:center; cursor:pointer; color: #0084ff; font-size: 14px; margin-top: 10px;" onclick="handleForgotPassword()">Forgot Password?</p>
+
+    <p style="text-align:center; cursor:pointer;" onclick="showScreen('register-screen')">Create Account</p>
+</div>
 
     <div id="list-screen" class="screen">
         <div class="list-header">
@@ -340,14 +348,12 @@ audio {
         messagingSenderId: "489231530058",
         appId: "1:489231530058:web:d32580399444a8e62f0eb3"
     };
-
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     let loggedUser = localStorage.getItem('chat_userid');
     let activeChatID = null;
     let replyingTo = null;
     const notifSound = new Audio('https://raw.githubusercontent.com/rafaelreis-hotmart/Audio-Notification/master/notification.mp3');
-
      window.onload = () => { 
     if(loggedUser) {
         loadMyData(); 
@@ -356,7 +362,6 @@ audio {
         showScreen('login-screen'); 
     }
 };
-
   function loadMyData() {
     if(!loggedUser) return;
     database.ref('users/' + loggedUser).once('value').then(snap => {
@@ -368,38 +373,61 @@ audio {
         }
     });
 }
-
     function togglePass(id, icon) {
         const inp = document.getElementById(id);
         const isPass = inp.type === "password";
         inp.type = isPass ? "text" : "password";
         icon.className = isPass ? "fa fa-eye eye-icon" : "fa fa-eye-slash eye-icon";
     }
-
     function previewImg(fId, iId) {
         const file = document.getElementById(fId).files[0];
         const reader = new FileReader();
         reader.onload = e => document.getElementById(iId).src = e.target.result;
         if(file) reader.readAsDataURL(file);
     }
-
-    function handleRegister() {
-        const id = document.getElementById('reg-id').value.trim().replace(/[.#$[\]]/g, "_");
-        const user = document.getElementById('reg-user').value.trim();
-        const name = document.getElementById('reg-name').value.trim();
-        const pass = document.getElementById('reg-pass').value;
-        const pic = document.getElementById('reg-preview').src;
-        if(!id || !user || !pass) return alert("Fill all!");
-        database.ref('users/' + id).set({ id, user, name, pass, pic }).then(() => { alert("Success!"); showScreen('login-screen'); });
+   function handleRegister() {
+    const id = document.getElementById('reg-id').value;
+    const email = document.getElementById('reg-email').value; 
+    const user = document.getElementById('reg-user').value;
+    
+    const pass = document.getElementById('reg-pass').value;
+    const name = document.getElementById('reg-name').value;
+    const pic = document.getElementById('reg-preview').src;
+    firebase.auth().createUserWithEmailAndPassword(email, pass)
+    .then((userCredential) => {
+        userCredential.user.sendEmailVerification();
+        alert("Verification email sent! Please check your inbox.");
+       
+       database.ref('users/' + id).set({
+    id: id,
+    email: email, 
+    user: user,
+    name: name,
+    pass: pass,
+    pic: pic
+});
+    })
+    .catch((error) => {
+        alert(error.message);
+    });
+}
+function resetPassword() {
+    const email = prompt("Enter your Gmail address:");
+    if (email) {
+        firebase.auth().sendPasswordResetEmail(email)
+        .then(() => {
+            alert("Password reset email sent!");
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
     }
-
+}
     function handleLogin() {
     const id = document.getElementById('log-id').value.trim().replace(/[.#$[\]]/g, "_");
     const pass = document.getElementById('log-pass').value;
 
     if(!id || !pass) return alert("Please enter ID and Password!");
-
-    
     const loginBtn = document.querySelector("#login-screen .btn-main");
     const originalText = loginBtn.innerText;
     loginBtn.innerText = "Logging in...";
@@ -423,7 +451,6 @@ audio {
     });
 }
     function getTime() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
-
    function openChat(pID, pData) {
     activeChatID = [loggedUser, pID].sort().join("_");
     document.getElementById('chat-partner-name').innerText = pData.name;
@@ -436,10 +463,7 @@ audio {
     database.ref('chats/' + activeChatID).off(); 
     let initialDataLoaded = false;
 
-
     const chatRef = database.ref('chats/' + activeChatID);
-    
-
     chatRef.limitToLast(50).on('child_added', snap => {
         const m = snap.val();
         const msgKey = snap.key;
@@ -457,12 +481,10 @@ audio {
     });
 
     chatRef.once('value', () => { initialDataLoaded = true; });
-
     chatRef.on('child_changed', snap => {
         const updatedMsg = snap.val();
         const msgElement = document.getElementById(`msg-${snap.key}`);
         if (msgElement) {
-           
             let badge = msgElement.querySelector('.reaction-badge');
             if (updatedMsg.reaction) {
                 if (!badge) {
@@ -472,7 +494,6 @@ audio {
                 }
                 badge.innerText = updatedMsg.reaction;
             }
-           
             if (updatedMsg.sender === loggedUser) {
                 const timeDiv = msgElement.querySelector('.msg-time');
                 const statusIcon = updatedMsg.status === 'seen' ? 
@@ -485,10 +506,9 @@ audio {
      function renderSingleMessage(msgKey, m, pData) {
     const box = document.getElementById('chat-box');
     const d = document.createElement('div');
-    d.id = `msg-${msgKey}`;
+    d.id = `msg-${msgKey}`; 
     d.className = `msg ${m.sender === loggedUser ? 'sent' : 'received'}`;
     
-
     let content;
     if (m.type === 'image') {
         content = `<img src="${m.text}" class="chat-img" onclick="window.open(this.src)">`;
@@ -498,16 +518,13 @@ audio {
     } else {
         content = m.text;
     }
-
     let statusIcon = "";
     if (m.sender === loggedUser) {
         statusIcon = m.status === 'seen' ? `<i class="fa fa-check-double" style="color:#00ff00;"></i>` : `<i class="fa fa-check"></i>`;
     }
-
     let replyHtml = m.replyTo ? `<div class="msg-reply-line"><b>${m.replyTo.name}:</b> ${m.replyTo.text}</div>` : "";
     let reactBadge = m.reaction ? `<span class="reaction-badge">${m.reaction}</span>` : "";
 
-   
     let reactionPanel = `
         <div class="reaction-panel" id="panel-${msgKey}">
             <span onclick="addReaction('${msgKey}', '❤️')">❤️</span>
@@ -517,7 +534,6 @@ audio {
             <span onclick="addReaction('${msgKey}', '😢')">😢</span>
             <span onclick="addReaction('${msgKey}', '🔥')">🔥</span>
         </div>`;
-
     d.innerHTML = `
         ${reactionPanel}
         ${replyHtml}
@@ -525,8 +541,6 @@ audio {
         ${reactBadge}
         <div class="msg-time">${m.time || ""} ${statusIcon}</div>
     `;
-
-   
     let timer;
     const showPanel = () => {
         timer = setTimeout(() => {
@@ -539,19 +553,16 @@ audio {
     d.addEventListener('touchend', clearTimer);
     d.addEventListener('mousedown', showPanel);
     d.addEventListener('mouseup', clearTimer);
-
     d.onclick = (e) => {
         if (e.target.tagName !== 'SPAN') { 
             setReply(m.type === 'image' ? 'Photo' : m.text, m.sender === loggedUser ? 'You' : pData.name);
         }
     };
-
     box.appendChild(d);
 }
     function sendMsg() {
         const inp = document.getElementById('msg-input');
         if(!inp.value.trim()) return;
-        
         let msgData = {
             sender: loggedUser,
             text: inp.value,
@@ -559,29 +570,24 @@ audio {
             time: getTime(),
             status: 'sent'
         };
-
         if(replyingTo) {
             msgData.replyTo = replyingTo; 
             cancelReply();
         }
-
         database.ref('chats/' + activeChatID).push(msgData);
         inp.value = "";
         database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
     }
-     
     function setReply(text, senderName) {
         replyingTo = { text: text.substring(0, 30) + (text.length > 30 ? "..." : ""), name: senderName };
         document.getElementById('reply-bar').style.display = 'flex';
         document.getElementById('reply-text').innerText = `Replying to: ${replyingTo.text}`;
         document.getElementById('msg-input').focus();
     }
-
     function cancelReply() {
         replyingTo = null;
         document.getElementById('reply-bar').style.display = 'none';
     }
-
     function sendImage(input) {
     const files = Array.from(input.files).slice(0, 5);
     files.forEach(file => {
@@ -598,10 +604,7 @@ audio {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
-              
                 const compressedData = canvas.toDataURL('image/jpeg', 0.5); 
-              
-
                 database.ref('chats/' + activeChatID).push({ 
                     sender: loggedUser, 
                     text: compressedData, 
@@ -614,13 +617,12 @@ audio {
         reader.readAsDataURL(file);
     });
     database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
-}
+    }
     function addEmoji(e) { const i = document.getElementById('msg-input'); i.value += e; i.focus(); }
    function renderList() {
     const cont = document.getElementById('list-container');
     cont.innerHTML = "<p style='text-align:center; padding:20px;'>Loading chats...</p>";
 
-   
     database.ref('users').once('value').then(snap => {
         cont.innerHTML = "";
         let users = [];
@@ -628,11 +630,8 @@ audio {
             const u = c.val();
             if (u.id !== loggedUser) users.push(u);
         });
-
-
         users.sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
-
-        const fragment = document.createDocumentFragment(); 
+        const fragment = document.createDocumentFragment();
         users.forEach(u => {
             const d = document.createElement('div');
             d.className = "chat-item";
@@ -643,33 +642,122 @@ audio {
         cont.appendChild(fragment);
     });
 }
-
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         if(id === 'list-screen') renderList();
     }
-
     function handleLogout() { localStorage.clear(); location.reload(); }
     function showEditProfile() { showScreen('edit-screen'); }
-    
     function searchUser() {
         const term = document.getElementById('search-input').value.toLowerCase();
         document.querySelectorAll('.chat-item').forEach(item => {
             item.style.display = item.innerText.toLowerCase().includes(term) ? "flex" : "none";
         });
     }
-    function saveProfile() {
+   function saveProfile() {
     const n = document.getElementById('edit-name').value;
     const p = document.getElementById('edit-preview').src;
     const newPass = document.getElementById('edit-pass').value;
-    
-    let updateData = { name: n, pic: p };
-    if(newPass) updateData.pass = newPass; 
+    database.ref('users/' + loggedUser + '/email').once('value').then(snap => {
+        const existingEmail = snap.val();
 
-    database.ref('users/' + loggedUser).update(updateData).then(() => { 
-        alert("Updated!"); 
-        showScreen('list-screen'); 
+        if (newPass) {
+            if (!existingEmail) {
+                const userEmailInput = prompt("Your account doesn't have a Gmail. Please enter your Gmail to receive OTP:");
+                if (userEmailInput && userEmailInput.includes("@")) {
+                    database.ref('users/' + loggedUser).update({ email: userEmailInput }).then(() => {
+                        sendOTPtoGmail(newPass, n, p);
+                    });
+                } else {
+                    alert("Valid Gmail is required to change password!");
+                }
+            } else {
+                sendOTPtoGmail(newPass, n, p);
+            }
+        } else {
+            database.ref('users/' + loggedUser).update({ name: n, pic: p }).then(() => {
+                alert("Profile Updated!");
+                showScreen('list-screen');
+            });
+        }
+    });
+}
+
+function sendOTPtoGmail(newPassword, newName, newPic) {
+    const otpCode = Math.floor(100000 + Math.random() * 900000);
+    database.ref('users/' + loggedUser + '/email').once('value').then(snap => {
+        const userEmail = snap.val();
+       
+        const templateParams = {
+            to_email: userEmail,
+            otp: otpCode 
+        };
+
+        emailjs.send('service_otsflko', 'template_ptre8en', templateParams)
+            .then(function(response) {
+               alert("Security Check: A code has been sent to your Gmail: " + userEmail);
+               const userInp = prompt("Please enter the 6-digit code sent to your Gmail:");
+               
+               if (userInp == otpCode) {
+                   database.ref('users/' + loggedUser).update({
+                       name: newName,
+                       pic: newPic,
+                       pass: newPassword
+                   }).then(() => {
+                       alert("Password and Profile updated successfully!");
+                       showScreen('list-screen');
+                   });
+               } else {
+                   alert("Wrong Code! Update failed.");
+               }
+            }, function(error) {
+               alert("Failed to send email. Check your EmailJS configuration.");
+               console.log("EmailJS Error:", error);
+            });
+    });
+}
+function handleForgotPassword() {
+    const userID = prompt("Enter your Phone Number / User ID:");
+    
+    if (!userID) return;
+    database.ref('users/' + userID).once('value').then(snap => {
+        const userData = snap.val();
+        
+        if (!userData || !userData.email) {
+            alert("This User ID has no Gmail linked or doesn't exist!");
+            return;
+        }
+
+        const userEmail = userData.email;
+        const otpCode = Math.floor(100000 + Math.random() * 900000);
+        const templateParams = {
+            to_email: userEmail,
+            otp: otpCode 
+        };
+
+        emailjs.send('service_otsflko', 'template_ptre8en', templateParams)
+            .then(function() {
+                alert("An OTP has been sent to your linked Gmail: " + userEmail);
+                const userInp = prompt("Enter the 6-digit OTP code:");
+                
+                if (userInp == otpCode) {
+                    const newPass = prompt("OTP Verified! Enter your New Password:");
+                    if (newPass && newPass.length >= 6) {
+                        database.ref('users/' + userID).update({
+                            pass: newPass
+                        }).then(() => {
+                            alert("Success! Your password has been reset. Now log in with your new password.");
+                        });
+                    } else {
+                        alert("Password must be at least 6 characters!");
+                    }
+                } else {
+                    alert("Wrong OTP! Reset failed.");
+                }
+            }, function(error) {
+                alert("Failed to send OTP. Try again later.");
+            });
     });
 }
 let mediaRecorder;
@@ -705,7 +793,6 @@ async function toggleRecording() {
         btn.classList.remove('recording-active');
     }
 }
-
 function sendVoiceMsg(audioData) {
     database.ref('chats/' + activeChatID).push({
         sender: loggedUser,
@@ -720,16 +807,9 @@ function addReaction(msgKey, emoji) {
     database.ref('chats/' + activeChatID + '/' + msgKey).update({ 
         reaction: emoji 
     });
-  
     const panel = document.getElementById(`panel-${msgKey}`);
     if(panel) panel.style.display = 'none';
 }
 </script>
 </body>
 </html>
-
-
-
-
-
-
