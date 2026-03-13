@@ -267,8 +267,9 @@ audio {
 
     <div id="login-screen" class="screen">
     <h2>Login</h2>
-    <input type="text" id="log-id" placeholder="Phone Number">
+    <input type="text" id="log-id" placeholder="Email or Phone Number">
     <div class="input-group">
+
         <input type="password" id="log-pass" placeholder="Password">
         <i class="fa fa-eye-slash eye-icon" onclick="togglePass('log-pass', this)"></i>
     </div>
@@ -288,7 +289,7 @@ audio {
                 <img id="my-pic" src="" style="width:40px; height:40px; border-radius:50%;" onclick="showEditProfile()">
             </div>
         </div>
-        <div style="padding: 10px 20px;"><input type="text" id="search-input" placeholder="Search..." oninput="searchUser()"></div>
+        <div style="padding: 10px 20px;"><input type="text" id="search-input" placeholder="Search..." oninput="debounceSearch()"></div>
         <div id="list-container" style="flex:1; overflow-y:auto;"></div>
     </div>
 
@@ -375,7 +376,7 @@ audio {
         showScreen('login-screen'); 
     }
 };
-  function loadMyData() {
+ function loadMyData() {
     if(!loggedUser) return;
     database.ref('users/' + loggedUser).once('value').then(snap => {
         const d = snap.val();
@@ -398,32 +399,7 @@ audio {
         reader.onload = e => document.getElementById(iId).src = e.target.result;
         if(file) reader.readAsDataURL(file);
     }
-   function handleRegister() {
-    const id = document.getElementById('reg-id').value;
-    const email = document.getElementById('reg-email').value; 
-    const user = document.getElementById('reg-user').value;
-    
-    const pass = document.getElementById('reg-pass').value;
-    const name = document.getElementById('reg-name').value;
-    const pic = document.getElementById('reg-preview').src;
-    firebase.auth().createUserWithEmailAndPassword(email, pass)
-    .then((userCredential) => {
-        userCredential.user.sendEmailVerification();
-        alert("Verification email sent! Please check your inbox.");
-       
-       database.ref('users/' + id).set({
-    id: id,
-    email: email, 
-    user: user,
-    name: name,
-    pass: pass,
-    pic: pic
-});
-    })
-    .catch((error) => {
-        alert(error.message);
-    });
-}
+  
 function resetPassword() {
     const email = prompt("Enter your Gmail address:");
     if (email) {
@@ -436,39 +412,76 @@ function resetPassword() {
         });
     }
 }
-    function handleLogin() {
-    const id = document.getElementById('log-id').value.trim().replace(/[.#$[\]]/g, "_");
-    const pass = document.getElementById('log-pass').value;
+  function handleLogin() {
+    const id = document.getElementById("log-id").value.trim();
+    const pass = document.getElementById("log-pass").value;
 
-    if(!id || !pass) return alert("Please enter ID and Password!");
+    if(!id || !pass){
+        alert("Please enter Email/Phone and Password");
+        return;
+    }
+
     const loginBtn = document.querySelector("#login-screen .btn-main");
     const originalText = loginBtn.innerText;
     loginBtn.innerText = "Logging in...";
     loginBtn.disabled = true;
 
-    database.ref('users/' + id).once('value').then(snap => {
-        const userData = snap.val();
-        if(userData && userData.pass === pass) {
-            loggedUser = id; 
-            localStorage.setItem('chat_userid', id); 
+    if(id.includes("@")) {
+        firebase.auth().signInWithEmailAndPassword(id, pass)
+        .then((userCredential) => {
+            loggedUser = userCredential.user.uid;
+            localStorage.setItem("chat_userid", loggedUser);
             loadMyData();
-            showScreen('list-screen');
-        } else {
-            alert("Wrong ID or Password!");
-        }
-    }).catch(err => {
-        alert("Network Error!");
-    }).finally(() => {
-        loginBtn.innerText = originalText;
-        loginBtn.disabled = false;
-    });
+            showScreen("list-screen");
+        })
+        .catch(error => {
+            alert(error.message);
+        })
+        .finally(() => {
+            loginBtn.innerText = originalText;
+            loginBtn.disabled = false;
+        });
+    } else {
+        // Phone number login using custom database
+        database.ref('users/' + id).once('value').then(snap => {
+            const userData = snap.val();
+            if(userData && userData.pass === pass){
+                loggedUser = id;
+                localStorage.setItem("chat_userid", id);
+                loadMyData();
+                showScreen("list-screen");
+            } else {
+                alert("Wrong Phone Number or Password!");
+            }
+        }).finally(()=>{
+            loginBtn.innerText = originalText;
+            loginBtn.disabled = false;
+        });
+    }
 }
+window.handleLogin = handleLogin;
+
     function getTime() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
    function openChat(pID, pData) {
     activeChatID = [loggedUser, pID].sort().join("_");
     document.getElementById('chat-partner-name').innerText = pData.name;
     document.getElementById('chat-partner-pic').src = pData.pic;
     showScreen('chat-screen');
+     
+    const activeChatPartnerID = pID;           
+    const currentPartnerName = pData.name;
+database.ref('recording/' + activeChatID).on('value', snap => {
+    const recUsers = snap.val() || {};
+    const partnerIsRecording = recUsers[activeChatPartnerID]; 
+    document.getElementById('chat-partner-name').innerText = partnerIsRecording ? 'Recording...' : currentPartnerName;
+});
+
+    database.ref('typing/' + activeChatID).on('value', snap => {
+    const typingUsers = snap.val() || {};
+    let partnerTyping = Object.keys(typingUsers).filter(u => u !== loggedUser);
+    const nameDiv = document.getElementById('chat-partner-name');
+    nameDiv.innerText = partnerTyping.length > 0 ? 'Typing...' : currentPartnerName;
+    });
     
     const box = document.getElementById('chat-box');
     box.innerHTML = ""; 
@@ -574,25 +587,32 @@ function resetPassword() {
     box.appendChild(d);
 }
     function sendMsg() {
-        const inp = document.getElementById('msg-input');
-        if(!inp.value.trim()) return;
-        let msgData = {
-            sender: loggedUser,
-            text: inp.value,
-            type: 'text',
-            time: getTime(),
-            status: 'sent'
-        };
-        if(replyingTo) {
-            msgData.replyTo = replyingTo; 
-            cancelReply();
-        }
-        database.ref('chats/' + activeChatID).push(msgData);
-        inp.value = "";
-        database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
-        database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
+    const inp = document.getElementById('msg-input');
+    if(!inp.value.trim()) return;
+
+    let msgData = {
+        sender: loggedUser,
+        text: inp.value,
+        type: 'text',
+        time: getTime(),
+        status: 'sent'
+    };
+
+    if(replyingTo) {
+        msgData.replyTo = replyingTo; 
+        cancelReply();
+    }
+
+    database.ref('chats/' + activeChatID).push(msgData);
+
+    inp.value = "";
+
+    database.ref('users/' + loggedUser).update({ lastActive: Date.now() });
+
+    setTimeout(()=>{
         renderList();
-     }
+    },500);
+}
     function setReply(text, senderName) {
         replyingTo = { text: text.substring(0, 30) + (text.length > 30 ? "..." : ""), name: senderName };
         document.getElementById('reply-bar').style.display = 'flex';
@@ -636,10 +656,10 @@ function resetPassword() {
     function addEmoji(e) { const i = document.getElementById('msg-input'); i.value += e; i.focus(); }
   function renderList() {
     const cont = document.getElementById('list-container');
-    cont.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Loading chats...</p>";
+    cont.innerHTML = "<p style='text-align:center;padding:20px;'>Loading chats...</p>";
     Promise.all([
-        database.ref('users').once('value'),
-        database.ref('chats').once('value')
+       database.ref('users').orderByChild("lastActive").limitToLast(30).once('value'),
+        database.ref('chats').limitToLast(50).once('value')
     ]).then(results => {
         const allUsers = results[0].val();
         const allChats = results[1].val() || {};
@@ -662,6 +682,16 @@ function resetPassword() {
         chatUsers.forEach(u => {
             const d = document.createElement('div');
             d.className = "chat-item";
+            let isActive = (Date.now() - (u.lastActive || 0)) < 30000; // ৩০ সেকেন্ডের মধ্যে active
+            let activeDot = isActive ? '<span style="width:10px;height:10px;background:green;border-radius:50%;display:inline-block;margin-left:5px;"></span>' : '';
+
+           d.innerHTML = `
+           <img src="${u.pic || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" style="width:50px;height:50px;border-radius:50%;">
+           <div style="flex:1;">
+          <h4 style="margin:0;">${u.name} ${activeDot}</h4>
+          <p style="margin:0;font-size:12px;color:#666;">@${u.user || 'user'}</p>
+         </div>
+`;
             d.onclick = () => openChat(u.id, u);
             let longPressTimer;
             const startPress = () => {
@@ -694,7 +724,11 @@ function resetPassword() {
         document.getElementById(id).classList.add('active');
         if(id === 'list-screen') renderList();
     }
-    function handleLogout() { localStorage.clear(); location.reload(); }
+    function handleLogout() {
+    localStorage.removeItem('chat_userid');
+    loggedUser = null;
+    showScreen('login-screen');
+}
     function showEditProfile() { showScreen('edit-screen'); }
   function searchUser() {
     const term = document.getElementById('search-input').value.toLowerCase().trim();
@@ -706,6 +740,53 @@ function resetPassword() {
     }
 
     database.ref('users').once('value').then(snap => {
+         const cont = document.getElementById('list-container');
+        cont.innerHTML = "";
+        let found = false;
+
+        snap.forEach(c => {
+            const u = c.val();
+            if (u.id !== loggedUser && 
+                ((u.name && u.name.toLowerCase().includes(term)) || 
+                 (u.user && u.user.toLowerCase().includes(term)))) {
+                found = true;
+                const d = document.createElement('div');
+                d.className = "chat-item";
+                d.style.justifyContent = "space-between"; 
+                const uData = JSON.stringify(u).replace(/"/g, '&quot;');
+
+                d.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <img src="${u.pic || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" style="width:50px; height:50px; border-radius:50%;">
+                        <div>
+                            <h4 style="margin:0;">${u.name}</h4>
+                            <p style="margin:0; font-size:12px; color:#666;">@${u.user || 'user'}</p>
+                        </div>
+                    </div>
+                    <button class="btn-main" style="padding: 6px 12px; font-size: 12px; border-radius: 10px;" 
+                        onclick="openChat('${u.id}', ${uData})">
+                        Message
+                    </button>
+                `;
+                cont.appendChild(d);
+            }
+        });
+
+        if (!found) {
+            cont.innerHTML = "<p style='text-align:center; padding:20px;'>No user found!</p>";
+        }
+    });
+}
+ let searchTimer;
+function debounceSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        searchUser();
+    }, 300);
+}
+    
+    database.ref('users').once('value').then(snap => {
+        const cont = document.getElementById('list-container');
         cont.innerHTML = "";
         let found = false;
 
@@ -739,7 +820,7 @@ function resetPassword() {
             cont.innerHTML = "<p style='text-align:center; padding:20px;'>No user found!</p>";
         }
     });
-}
+
    function saveProfile() {
     const n = document.getElementById('edit-name').value;
     const p = document.getElementById('edit-preview').src;
@@ -882,14 +963,25 @@ async function toggleRecording() {
             };
             mediaRecorder.start();
             isRecording = true;
+           
             btn.classList.add('recording-active');
+
+            if (activeChatID) {
+                database.ref('recording/' + activeChatID + '/' + loggedUser).set(true);
+            }
+
         } catch (err) {
             alert("Microphone access denied!");
         }
     } else {
         mediaRecorder.stop();
         isRecording = false;
+
         btn.classList.remove('recording-active');
+
+        if (activeChatID) {
+            database.ref('recording/' + activeChatID + '/' + loggedUser).remove();
+        }
     }
 }
 function sendVoiceMsg(audioData) {
@@ -909,6 +1001,27 @@ function addReaction(msgKey, emoji) {
     const panel = document.getElementById(`panel-${msgKey}`);
     if(panel) panel.style.display = 'none';
 }
+function handleRegister() {
+    alert("Register function not implemented yet!");
+}
+let typingTimeout;
+const msgInput = document.getElementById('msg-input');
+
+msgInput.addEventListener('input', () => {
+    if(!activeChatID) return;
+
+    database.ref('typing/' + activeChatID + '/' + loggedUser).set(true);
+
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        database.ref('typing/' + activeChatID + '/' + loggedUser).remove();
+    }, 1000);
+});
+    window.handleLogin = handleLogin;
+    window.handleRegister = handleRegister;
+    window.showScreen = showScreen;
+    window.handleForgotPassword = handleForgotPassword;
 </script>
 </body>
 </html>
+
